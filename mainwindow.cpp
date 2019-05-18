@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->actionMerge->setEnabled(false);
     ui->actionSave->setEnabled(false);
+    ui->actionUseResult->setEnabled(false);
     setWindowTitle("GraphCut Image Merging");
 }
 
@@ -34,12 +35,17 @@ MainWindow::~MainWindow(){
 
 void MainWindow::paintEvent(QPaintEvent *){
     if(!imgloaded) return;
-    QImage image(trgqtimg.size(), QImage::Format_ARGB32_Premultiplied);
-    QPainter imagePainter(&image);
-    imagePainter.setRenderHint(QPainter::Antialiasing, true);
-
     if(!ui->actionSave->isEnabled()){
+        this->setFixedHeight(trgqtimg.height());
+        this->setFixedWidth(trgqtimg.width());
+        QImage image(trgqtimg.size(), QImage::Format_ARGB32_Premultiplied);
+        QPainter imagePainter(&image);
+        imagePainter.setRenderHint(QPainter::Antialiasing, true);
+
+        qreal alpha=ui->actionOpacity->isChecked()?0.8:1;
         imagePainter.drawImage(0,0,trgqtimg);
+        imagePainter.setOpacity(alpha);
+
 
         cv::Mat resizesrcimg(srccvmat.rows*scale,srccvmat.cols*scale,srccvmat.type());
         cv::resize(srccvmat, resizesrcimg, resizesrcimg.size(), cv::INTER_CUBIC);
@@ -47,12 +53,19 @@ void MainWindow::paintEvent(QPaintEvent *){
         std::cout << srcx << " " << srcy << std::endl;
         imagePainter.setPen(Qt::black);
         imagePainter.drawRect(rect);
+        QPainter widgetPainter(this);
+        widgetPainter.drawImage(0, 0, image);
     }else{
+        this->setFixedHeight(dstqtimg.height());
+        this->setFixedWidth(dstqtimg.width());
+        QImage image(dstqtimg.size(), QImage::Format_ARGB32_Premultiplied);
+        QPainter imagePainter(&image);
+        imagePainter.setRenderHint(QPainter::Antialiasing, true);
         imagePainter.drawImage(0,0,dstqtimg);
+        QPainter widgetPainter(this);
+        widgetPainter.drawImage(0, 0, image);
     }
 
-    QPainter widgetPainter(this);
-    widgetPainter.drawImage(0, 0, image);
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event){
@@ -85,13 +98,13 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *){
 }
 
 bool MainWindow::Load(){
-    srcfile = QFileDialog::getOpenFileName(this,tr("Source File"),"/home/terasaki/ImageforPoissonImageEditing",tr("Image(*.tif *.png *.jpg)"));
+    srcfile = QFileDialog::getOpenFileName(this,tr("Source File"),"/home/terasaki/ImageforPoissonImageEditing",tr("Image(*.tif *.png *.jpg *.gif)"));
     if(srcfile=="") return false;
     srccvmat=cv::imread(srcfile.toStdString());
     if(srccvmat.empty()) return false;
     srcqtimg=cvMatToQImage(srccvmat);
 
-    trgfile = QFileDialog::getOpenFileName(this,tr("Target File"),"/home/terasaki/ImageforPoissonImageEditing",tr("Image(*.tif *.png *.jpg)"));
+    trgfile = QFileDialog::getOpenFileName(this,tr("Target File"),"/home/terasaki/ImageforPoissonImageEditing",tr("Image(*.tif *.png *.jpg *.gif)"));
     if(trgfile=="") return false;
     trgcvmat=cv::imread(trgfile.toStdString());
     if(trgcvmat.empty())return false;
@@ -140,9 +153,35 @@ void MainWindow::on_actionMerge_triggered()
 
     if(dstcvmat.empty()) return;
     dstqtimg=cvMatToQImage(dstcvmat);
+    std::cout << dstqtimg.width() << dstqtimg.height() << std::endl;
 
     ui->actionMerge->setEnabled(false);
     ui->actionSave->setEnabled(true);
+    ui->actionUseResult->setEnabled(true);
 
+    update();
+}
+
+void MainWindow::on_actionOpacity_triggered()
+{
+    update();
+}
+
+void MainWindow::on_actionUndo_triggered()
+{
+    ui->actionMerge->setEnabled(true);
+    ui->actionSave->setEnabled(false);
+
+    update();
+
+}
+
+void MainWindow::on_actionUseResult_triggered()
+{
+    trgqtimg = dstqtimg.copy();
+    trgcvmat = dstcvmat.clone();
+    ui->actionUseResult->setEnabled(false);
+    ui->actionMerge->setEnabled(true);
+    ui->actionSave->setEnabled(false);
     update();
 }

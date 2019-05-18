@@ -27,11 +27,11 @@ T square (T t){
 cv::Rect get_intersection_rect(size_t width1,size_t height1,size_t width2,size_t height2,int x,int y) {
     int sx = std::max(0, x);
     int sy = std::max(0, y);
-    int ex = std::min(width1 , x + width2 );
-    int ey = std::min(height1, y + height2);
+    int ex = std::min(width1-1 , x + width2-1 );
+    int ey = std::min(height1-1, y + height2-1);
 
-    int intersection_width  = ex - sx;
-    int intersection_height = ey - sy;
+    int intersection_width  = ex - sx + 1;
+    int intersection_height = ey - sy + 1;
     if (intersection_width > 0 && intersection_height > 0) {
         return cv::Rect(sx, sy, intersection_width, intersection_height);
     }
@@ -150,11 +150,11 @@ cv::Mat image_synthesizer::operator()(const cv::Mat &src1,const cv::Mat &src2,co
     for(int row = 0; row < overlapped_height; row++) {
         int row1 = offset_row1 + row, col1 = offset_col1 + overlapped_width-1;
         int row2 = offset_row2 + row, col2 = offset_col2 + overlapped_width-1;
-        int idx = row*overlapped_width;
-        if(0<=row1&&row1<src1.rows&&0<=col1-1&&col1-1<src1.cols){
+        int idx = row*overlapped_width + overlapped_width - 1;
+        if(0<=row1&&row1<src1.rows&&0<=col1+1&&col1+1<src1.cols){
             edges.emplace_back(src_node, idx, inf_weight);
         }
-        if(0<=row2&&row2<src2.rows&&0<=col2-1&&col2-1<src2.cols){
+        if(0<=row2&&row2<src2.rows&&0<=col2+1&&col2+1<src2.cols){
             edges.emplace_back(idx, sink_node, inf_weight);
         }
     }
@@ -183,10 +183,12 @@ cv::Mat image_synthesizer::operator()(const cv::Mat &src1,const cv::Mat &src2,co
         }
     }
 
+    std::cout << rect.x << "," << rect.y << std::endl;
+    std::cout << sx << "," << sy << std::endl;
     for(int row=0;row<rect.height;row++){
         for(int col=0;col<rect.width;col++){
-            int y = rect.y - sy;
-            int x = rect.x - sx;
+            int y = rect.y - sy + row;
+            int x = rect.x - sx + col;
             int idx = overlapped_width * y + x;
             edges.emplace_back(idx,sink_node, inf_weight);
         }
@@ -256,7 +258,7 @@ cv::Mat image_synthesizer::operator()(const cv::Mat &src1,const cv::Mat &src2,co
     }
     int global_row_dst = std::abs(p.y);
     int global_col_dst = std::abs(p.x);
-    dst.copyTo(total_dst.rowRange(global_row_dst, global_row2+overlapped_height).colRange(global_col2, global_col2+overlapped_width));
+    dst.copyTo(total_dst.rowRange(global_row_dst, global_row_dst+overlapped_height).colRange(global_col_dst, global_col_dst+overlapped_width));
     return total_dst;
 }
 

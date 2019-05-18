@@ -35,6 +35,10 @@
      <string>編集</string>
     </property>
     <addaction name="actionMerge"/>
+    <addaction name="actionUndo"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpacity"/>
+    <addaction name="actionUseResult"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -52,6 +56,24 @@
   <action name="actionSave">
    <property name="text">
     <string>保存</string>
+   </property>
+  </action>
+  <action name="actionOpacity">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>半透明化</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>戻す</string>
+   </property>
+  </action>
+  <action name="actionUseResult">
+   <property name="text">
+    <string>合成結果を使用する</string>
    </property>
   </action>
  </widget>

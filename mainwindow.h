@@ -34,6 +34,12 @@ private slots:
     void on_actionMerge_triggered();
     void on_actionSave_triggered();
 
+    void on_actionOpacity_triggered();
+
+    void on_actionUndo_triggered();
+
+    void on_actionUseResult_triggered();
+
 private:
     Ui::MainWindow *ui;
     QString srcfile;
